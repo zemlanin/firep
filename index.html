@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
 
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>firep</title>
 
@@ -13,12 +12,20 @@
       width: 100%;
     }
 
-    body,
-    input {
-      font-size: 16px;
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body, input {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
         "Segoe UI Symbol";
+    }
+
+    * {
+      font-size: 16px;
+      box-sizing: border-box;
     }
 
     #firep {
@@ -38,28 +45,27 @@
       outline: none;
       padding: 0;
       margin: 0;
-      font-size: 16px;
     }
     #firep #highlight {
       z-index: 1;
       flex: 1;
-      position: relative;
       display: inline-block;
       white-space: pre;
-      line-height: 2;
-      box-sizing: border-box;
       color: transparent;
+      font-size: 16px;
+      margin-left: -1px;
+    }
 
-      -debug-z-index: 10;
-      -debug-color: red;
-    }
-    #highlight span {
+    #firep #highlight span {
       position: relative;
+      display: inline-block;
+      z-index: 0;
     }
-    #highlight span:before {
+
+    #firep #highlight span.x:before {
       content: ' ';
       position: absolute;
-      z-index: 10;
+      z-index: -1;
       top: -1px;
       bottom: -1px;
       left: -1px;
@@ -71,23 +77,23 @@
       box-sizing: border-box;
       padding: 3px;
       background-color: #dffee3;
-      -debug-background-color: transparent;
     }
 
     #wrapper {
-      width: calc(40% + 420px);
+      width: calc(40% + 450px);
       margin: 1em auto;
+      padding: 1em;
     }
 
     @media (max-width: 600px) {
       #wrapper {
-        width: 90%;
+        width: 95%;
       }
     }
 
     @media (min-width: 600px) and (max-width: 1200px) {
       #wrapper {
-        width: calc(60% + 180px);
+        width: calc(60% + 210px);
       }
     }
 
@@ -121,6 +127,7 @@
     <form id="firep">
       <input autocomplete="off"
         spellcheck="false"
+        autocapitalize="none"
         value="lol from:me date>21-07-2017"
       />
       <div id="highlight"></div>
@@ -193,10 +200,8 @@
         )
       }
 
-      function getTextWidth(text, font) {
-        font =
-          font ||
-          '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
+      function getTextWidth(text) {
+        const font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
         const canvas =
           getTextWidth.canvas ||
           (getTextWidth.canvas = document.createElement("canvas"))
@@ -206,10 +211,17 @@
       }
 
       function updateHighlight(input, parsedQuery) {
-        if (getTextWidth(input.value) > input.clientWidth) {
-          document.getElementById("highlight").innerHTML = " "
+        const inputWidth = input.clientWidth
+
+        const highlightEl = document.getElementById("highlight")
+
+        if (getTextWidth(input.value) > inputWidth) {
+          highlightEl.innerHTML = ''
           return
         }
+
+        highlightEl.style.width = inputWidth + "px"
+        highlightEl.style.marginLeft = -inputWidth + "px"
 
         const ih = parsedQuery.filters.reduce(
           (acc, f, i) => {
@@ -220,8 +232,10 @@
               cursor: f.endIndex,
               result:
                 acc.result +
-                input.value.slice(acc.cursor, f.startIndex) +
                 "<span>" +
+                input.value.slice(acc.cursor, f.startIndex) +
+                "</span>" +
+                "<span class='x'>" +
                 f.raw +
                 "</span>",
             }
@@ -229,12 +243,7 @@
           { cursor: 0, result: "" }
         ).result
 
-        const inputWidth = input.clientWidth
-
-        document.getElementById("highlight").innerHTML = ih || ' '
-        document.getElementById("highlight").style.width = inputWidth + "px"
-        document.getElementById("highlight").style.marginLeft =
-          -inputWidth + "px"
+        highlightEl.innerHTML = ih || ' '
       }
 
       function redraw(input, shouldUpdateDebug) {
@@ -246,15 +255,16 @@
       ;(function() {
         const throttle = function(type, name, obj) {
           let running = false
+          const onFrame = function() {
+            obj.dispatchEvent(new CustomEvent(name))
+            running = false
+          }
           obj.addEventListener(type, function() {
             if (running) {
               return
             }
             running = true
-            requestAnimationFrame(function() {
-              obj.dispatchEvent(new CustomEvent(name))
-              running = false
-            })
+            requestAnimationFrame(onFrame)
           })
         }
 
