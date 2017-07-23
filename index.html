@@ -10,7 +10,7 @@
       width: 100%;
     }
 
-    body {
+    body, input {
       font-size: 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
@@ -43,6 +43,9 @@
       line-height: 2;
       box-sizing: border-box;
       color: transparent;
+
+      -debug-z-index: 10;
+      -debug-color: red;
     }
     #highlight span {
       position: relative;
@@ -53,10 +56,8 @@
       z-index: 10;
       top: -1px;
       bottom: -1px;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      left: -1px;
+      right: -1px;
       vertical-align: middle;
       display: block;
       border: 1px solid #00a500;
@@ -64,6 +65,7 @@
       box-sizing: border-box;
       padding: 3px;
       background-color: #DFFEE3;
+      -debug-background-color: transparent;
     }
 
     #wrapper {
