@@ -8,7 +8,7 @@
   <title>firep</title>
 
   <style type="text/css">
-    #debug {
+    #debug, #query {
       width: 100%;
     }
 
@@ -133,6 +133,7 @@
       <div id="highlight"></div>
     </form>
 
+    <pre id="query"></pre>
     <pre id="debug"></pre>
 
     <script type="text/javascript">
@@ -192,12 +193,34 @@
         }
       }
 
+      function serializeFilters(parsedQuery) {
+        const q = parsedQuery.filters.filter(f => f.key == 'query').map(f => f.value).join(' ')
+
+        const result = []
+
+        if (q) {
+          result.push(`q=${encodeURIComponent(q)}`)
+        }
+
+        const rest = parsedQuery.filters.filter(f => f.key != 'query')
+
+        for (const f of rest) {
+          const key = f.key + (f.op !== 'equal' ? '_' + f.op : '')
+
+          result.push(`${key}=${encodeURIComponent(f.value)}`)
+        }
+
+        return '?' + result.join('&')
+      }
+
       function updateDebug(input) {
         document.getElementById("debug").innerText = JSON.stringify(
           parseQuery(input.value),
           null,
           "  "
         )
+
+        document.getElementById("query").innerText = serializeFilters(parseQuery(input.value))
       }
 
       function getTextWidth(text) {
