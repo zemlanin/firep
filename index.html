@@ -4,11 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>firep</title>
-  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/grids-responsive-min.css" crossorigin="anonymous">
+
   <style type="text/css">
-    pre, .pure-g pre, .pure-g [class*=pure-u] pre {
-      font-family: monospace;
+    #debug {
+      width: 100%;
+    }
+
+    body {
+      font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
 
     #firep {
@@ -16,11 +20,19 @@
       display: flex;
       flex: 1;
       width: 100%;
+      border: 1px lightgray solid;
+      border-radius: 3px;
+      padding: 5px;
     }
     #firep input {
       z-index: 2;
       background-color: transparent;
       width: 100%;
+      border: none;
+      outline: none;
+      padding: 0;
+      margin: 0;
+      font-size: 16px;
     }
     #firep #highlight {
       z-index: 1;
@@ -29,7 +41,6 @@
       display: inline-block;
       white-space: pre;
       line-height: 2;
-      border: 1px transparent solid;
       box-sizing: border-box;
       color: transparent;
     }
@@ -42,6 +53,8 @@
       z-index: 10;
       top: -1px;
       bottom: -1px;
+      top: 0;
+      bottom: 0;
       left: 0;
       right: 0;
       vertical-align: middle;
@@ -52,18 +65,27 @@
       padding: 3px;
       background-color: #DFFEE3;
     }
+
+    #wrapper {
+      width: 40%;
+      margin: 1em auto;
+    }
+
+    @media (max-width: 600px) {
+      #wrapper {
+        width: 90%;
+      }
+    }
   </style>
 </head>
-<body class='pure-g'>
-  <div class='pure-u-5-6 pure-u-md-1-3' style="margin: 1em auto;">
-    <form class='pure-form' id='firep'>
+<body>
+  <div id='wrapper'>
+    <form id='firep'>
       <input autocomplete="off" value="lol from:me date>21-07-2017" />
       <div id='highlight'></div>
     </form>
 
-    <pre class='pure-u-1' id='debug'>
-      
-    </pre>
+    <pre id='debug'></pre>
   </div>
   <script type="text/javascript">
     const opSymbols = {
@@ -78,30 +100,43 @@
     const parseQuery = function (query) {
       const parts = query.replace(/\s+/, ' ').split(' ').filter(Boolean)
 
-      const analyzedParts = parts.map(p => {
-        const parsed = p.match(/^([a-z]+)(:|=|<|>|<=|>=)(.*)$/)
+      const condRegex = /(^|\s*|)([a-z_]+)(:|=|<|>|<=|>=)(\S*)(\s*)/g
 
-        if (!parsed) {
-          return {
+      const analyzedParts = []
+      let condCursor, lastIndex = 0
+
+      while ((condCursor = condRegex.exec(query)) !== null) {
+        const [_, _spaceStart, key, opSymbol, value, _spaceEnd] = condCursor
+
+        if (lastIndex != condCursor.index) {
+          analyzedParts.push({
             key: 'query',
             op: 'equal',
-            value: p,
-          }
+            value: query.slice(lastIndex, condCursor.index),
+          })
         }
 
-        const [_, key, opSymbol, value] = parsed
+        lastIndex = condRegex.lastIndex
+        const raw = key + opSymbol + value
+        const startIndex = condCursor.index + _spaceStart.length
 
-        const startIndex = query.indexOf(p)
-
-        return {
+        analyzedParts.push({
           key,
           op: opSymbols[opSymbol],
           value,
           startIndex,
-          endIndex: startIndex + p.length,
-          raw: p
-        }
-      })
+          endIndex: startIndex + raw.length,
+          raw: raw,
+        })
+      }
+
+      if (lastIndex != query.length) {
+        analyzedParts.push({
+          key: 'query',
+          op: 'equal',
+          value: query.slice(lastIndex, query.length),
+        })
+      }
 
       return {
         filters: analyzedParts,
@@ -130,9 +165,11 @@
         {cursor: 0, result: ''}
       ).result
 
+      const inputWidth = input.clientWidth
+
       document.getElementById('highlight').innerHTML = ih
-      document.getElementById('highlight').style.width = input.clientWidth + 'px'
-      document.getElementById('highlight').style.marginLeft = -input.clientWidth + 7 + 'px'
+      document.getElementById('highlight').style.width = inputWidth + 'px'
+      document.getElementById('highlight').style.marginLeft = -inputWidth + 'px'
     }
 
     function redraw(input) {
@@ -145,8 +182,6 @@
       redraw(event.target)
     })
 
-    redraw(document.getElementById('firep').querySelector('input'))
-    // ¯\_(ツ)_/¯ 
     redraw(document.getElementById('firep').querySelector('input'))
   </script>
 </body>
