@@ -84,9 +84,33 @@
         width: 90%;
       }
     }
+
+    header {
+      margin: 20px auto;
+      width: 40px;
+      height: 40px;
+    }
+
+    header svg {
+      transform: rotate(45deg);
+    }
   </style>
 </head>
 <body>
+  <header>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 3 3">
+      <path d="M 3 3 L 3 0 L 0 3 L 0 0 z" fill="red" />
+      <path d="M 3 3 L 0 3 L 1.5 1.5 z" fill="darkred" />
+      <rect width="3" height="3" x="0" fill="none" stroke="darkred" stroke-width="0.2"/>
+      <rect width="3" height="3" x="0" fill="#d2232c55" stroke="darkred" stroke-width="0.2" rx="0.5" ry="0.5" />
+      <rect width="1" height="1" x="1" y="1" fill="none" stroke="darkred" stroke-width="0.1"/>
+      <rect width="1" height="1" x="1" y="1" fill="#d2232c" stroke="darkred" stroke-width="0.1" rx="0.2" ry="0.2" />
+      <line x1="0" y1="0" x2="1" y2="1" fill="#d2232c" stroke="darkred" stroke-width="0.1" />
+      <line x1="3" y1="3" x2="2" y2="2" fill="#d2232c" stroke="darkred" stroke-width="0.1" />
+      <line x1="0" y1="3" x2="1" y2="2" fill="#d2232c" stroke="darkred" stroke-width="0.1" />
+      <line x1="3" y1="0" x2="2" y2="1" fill="#d2232c" stroke="darkred" stroke-width="0.1" />
+    </svg>
+  </header>
   <div id="wrapper">
     <form id="firep">
       <input autocomplete="off"
