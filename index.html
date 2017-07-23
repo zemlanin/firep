@@ -2,7 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
   <title>firep</title>
 
   <style type="text/css">
@@ -10,9 +13,12 @@
       width: 100%;
     }
 
-    body, input {
+    body,
+    input {
       font-size: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol";
     }
 
     #firep {
@@ -64,7 +70,7 @@
       border-radius: 3px;
       box-sizing: border-box;
       padding: 3px;
-      background-color: #DFFEE3;
+      background-color: #dffee3;
       -debug-background-color: transparent;
     }
 
@@ -81,144 +87,160 @@
   </style>
 </head>
 <body>
-  <div id='wrapper'>
-    <form id='firep'>
-      <input autocomplete="off" value="lol from:me date>21-07-2017" />
-      <div id='highlight'></div>
+  <div id="wrapper">
+    <form id="firep">
+      <input autocomplete="off"
+        spellcheck="false"
+        value="lol from:me date>21-07-2017"
+      />
+      <div id="highlight"></div>
     </form>
 
-    <pre id='debug'></pre>
-  </div>
-  <script type="text/javascript">
-    const opSymbols = {
-      ':': 'equal',
-      '=': 'equal',
-      '>': 'gt',
-      '<': 'lt',
-      '>=': 'gte',
-      '<=': 'lte',
-    }
+    <pre id="debug"></pre>
 
-    const parseQuery = function (query) {
-      const parts = query.replace(/\s+/, ' ').split(' ').filter(Boolean)
+    <script type="text/javascript">
+      const opSymbols = {
+        ":": "equal",
+        "=": "equal",
+        ">": "gt",
+        "<": "lt",
+        ">=": "gte",
+        "<=": "lte",
+      }
 
-      const condRegex = /(^|\s*|)([a-z_]+)(:|=|<|>|<=|>=)(\S*)(\s*)/g
+      const parseQuery = function(query) {
+        const parts = query.replace(/\s+/, " ").split(" ").filter(Boolean)
 
-      const analyzedParts = []
-      let condCursor, lastIndex = 0
+        const condRegex = /(^|\s*|)([a-z_]+)(:|=|<|>|<=|>=)(\S*)(\s*)/g
 
-      while ((condCursor = condRegex.exec(query)) !== null) {
-        const [_, _spaceStart, key, opSymbol, value, _spaceEnd] = condCursor
+        const analyzedParts = []
+        let condCursor,
+          lastIndex = 0
 
-        if (lastIndex != condCursor.index) {
+        while ((condCursor = condRegex.exec(query)) !== null) {
+          const [_, _spaceStart, key, opSymbol, value, _spaceEnd] = condCursor
+
+          if (lastIndex != condCursor.index) {
+            analyzedParts.push({
+              key: "query",
+              op: "equal",
+              value: query.slice(lastIndex, condCursor.index),
+            })
+          }
+
+          lastIndex = condRegex.lastIndex
+          const raw = key + opSymbol + value
+          const startIndex = condCursor.index + _spaceStart.length
+
           analyzedParts.push({
-            key: 'query',
-            op: 'equal',
-            value: query.slice(lastIndex, condCursor.index),
+            key,
+            op: opSymbols[opSymbol],
+            value,
+            startIndex,
+            endIndex: startIndex + raw.length,
+            raw: raw,
           })
         }
 
-        lastIndex = condRegex.lastIndex
-        const raw = key + opSymbol + value
-        const startIndex = condCursor.index + _spaceStart.length
+        if (lastIndex != query.length) {
+          analyzedParts.push({
+            key: "query",
+            op: "equal",
+            value: query.slice(lastIndex, query.length),
+          })
+        }
 
-        analyzedParts.push({
-          key,
-          op: opSymbols[opSymbol],
-          value,
-          startIndex,
-          endIndex: startIndex + raw.length,
-          raw: raw,
-        })
+        return {
+          filters: analyzedParts,
+        }
       }
 
-      if (lastIndex != query.length) {
-        analyzedParts.push({
-          key: 'query',
-          op: 'equal',
-          value: query.slice(lastIndex, query.length),
-        })
+      function updateDebug(input) {
+        document.getElementById("debug").innerText = JSON.stringify(
+          parseQuery(input.value),
+          null,
+          "  "
+        )
       }
 
-      return {
-        filters: analyzedParts,
-      }
-    }
-
-    function updateDebug(input) {
-      document.getElementById('debug').innerText = JSON.stringify(
-        parseQuery(input.value), null, "  "
-      )
-    }
-
-    function getTextWidth(text, font) {
-      font = font || '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
-      const canvas = getTextWidth.canvas ||
-        (getTextWidth.canvas = document.createElement("canvas"))
-      const context = canvas.getContext("2d")
-      context.font = font
-      return context.measureText(text).width
-  }
-
-    function updateHighlight(input, parsedQuery) {
-      if (getTextWidth(input.value) > input.clientWidth) {
-        document.getElementById('highlight').innerHTML = ' '
-        return
+      function getTextWidth(text, font) {
+        font =
+          font ||
+          '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
+        const canvas =
+          getTextWidth.canvas ||
+          (getTextWidth.canvas = document.createElement("canvas"))
+        const context = canvas.getContext("2d")
+        context.font = font
+        return context.measureText(text).width
       }
 
-      const ih = parsedQuery.filters.reduce(
-        (acc, f, i) => {
-          if (!f.raw) { return acc }
-          return {
-            cursor: f.endIndex,
-            result: (
-              acc.result
-              + input.value.slice(acc.cursor, f.startIndex)
-              + '<span>' + f.raw + '</span>'
-            ),
-          }
-        },
-        {cursor: 0, result: ''}
-      ).result
+      function updateHighlight(input, parsedQuery) {
+        if (getTextWidth(input.value) > input.clientWidth) {
+          document.getElementById("highlight").innerHTML = " "
+          return
+        }
 
-      const inputWidth = input.clientWidth
+        const ih = parsedQuery.filters.reduce(
+          (acc, f, i) => {
+            if (!f.raw) {
+              return acc
+            }
+            return {
+              cursor: f.endIndex,
+              result:
+                acc.result +
+                input.value.slice(acc.cursor, f.startIndex) +
+                "<span>" +
+                f.raw +
+                "</span>",
+            }
+          },
+          { cursor: 0, result: "" }
+        ).result
 
-      document.getElementById('highlight').innerHTML = ih
-      document.getElementById('highlight').style.width = inputWidth + 'px'
-      document.getElementById('highlight').style.marginLeft = -inputWidth + 'px'
-    }
+        const inputWidth = input.clientWidth
 
-    function redraw(input) {
-      const parsedQuery = parseQuery(input.value)
-      updateDebug(input)
-      updateHighlight(input, parsedQuery)
-    }
+        document.getElementById("highlight").innerHTML = ih
+        document.getElementById("highlight").style.width = inputWidth + "px"
+        document.getElementById("highlight").style.marginLeft =
+          -inputWidth + "px"
+      }
 
-    ;(function() {
-      const throttle = function (type, name, obj) {
-        let running = false;
-        obj.addEventListener(type, function() {
-          if (running) { return; }
-          running = true;
-          requestAnimationFrame(function() {
-            obj.dispatchEvent(new CustomEvent(name));
-            running = false;
-          });
-        });
-      };
+      function redraw(input) {
+        const parsedQuery = parseQuery(input.value)
+        updateDebug(input)
+        updateHighlight(input, parsedQuery)
+      }
 
-      throttle("resize", "optimizedResize", window);
-    })();
+      ;(function() {
+        const throttle = function(type, name, obj) {
+          let running = false
+          obj.addEventListener(type, function() {
+            if (running) {
+              return
+            }
+            running = true
+            requestAnimationFrame(function() {
+              obj.dispatchEvent(new CustomEvent(name))
+              running = false
+            })
+          })
+        }
 
-    redraw(document.getElementById('firep').querySelector('input'))
+        throttle("resize", "optimizedResize", window)
+      })()
 
-    window.addEventListener("optimizedResize", function () {
-      redraw(document.getElementById('firep').querySelector('input'))
-    });
+      redraw(document.getElementById("firep").querySelector("input"))
 
-    document.getElementById('firep').addEventListener('input', event => {
-      redraw(event.target)
-    })
-  </script>
+      window.addEventListener("optimizedResize", function() {
+        redraw(document.getElementById("firep").querySelector("input"))
+      })
+
+      document.getElementById("firep").addEventListener("input", event => {
+        redraw(event.target)
+      })
+    </script>
+  </div>
 </body>
 </html>
