@@ -75,13 +75,19 @@
     }
 
     #wrapper {
-      width: 40%;
+      width: calc(40% + 420px);
       margin: 1em auto;
     }
 
     @media (max-width: 600px) {
       #wrapper {
         width: 90%;
+      }
+    }
+
+    @media (min-width: 600px) and (max-width: 1200px) {
+      #wrapper {
+        width: calc(60% + 180px);
       }
     }
 
@@ -225,16 +231,16 @@
 
         const inputWidth = input.clientWidth
 
-        document.getElementById("highlight").innerHTML = ih
+        document.getElementById("highlight").innerHTML = ih || ' '
         document.getElementById("highlight").style.width = inputWidth + "px"
         document.getElementById("highlight").style.marginLeft =
           -inputWidth + "px"
       }
 
-      function redraw(input) {
+      function redraw(input, shouldUpdateDebug) {
         const parsedQuery = parseQuery(input.value)
-        updateDebug(input)
         updateHighlight(input, parsedQuery)
+        shouldUpdateDebug !== false ? updateDebug(input) : null
       }
 
       ;(function() {
@@ -258,7 +264,7 @@
       redraw(document.getElementById("firep").querySelector("input"))
 
       window.addEventListener("optimizedResize", function() {
-        redraw(document.getElementById("firep").querySelector("input"))
+        redraw(document.getElementById("firep").querySelector("input"), false)
       })
 
       document.getElementById("firep").addEventListener("input", event => {
