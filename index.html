@@ -81,6 +81,18 @@
       --background-color: transparent;
     }
 
+    #firep #highlight span.x.key_type:first-child:before {
+      background-color: lightblue;
+
+      margin-left: -5px;
+      margin-right: -1px;
+      margin-top: -5px;
+      margin-bottom: -5px;
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+      border-color: transparent;
+    }
+
     #wrapper {
       width: calc(40% + 450px);
       margin: 1em auto;
@@ -282,14 +294,14 @@
             if (!f.raw) {
               return acc
             }
+            
+            const prefix = input.value.slice(acc.cursor, f.startIndex)
             return {
               cursor: f.endIndex,
               result:
                 acc.result +
-                "<span>" +
-                input.value.slice(acc.cursor, f.startIndex) +
-                "</span>" +
-                "<span class='x'>" +
+                (prefix ? "<span>" + prefix + "</span>" : "") +
+                "<span class='x key_" + f.key + "'>" +
                 f.raw +
                 "</span>",
             }
