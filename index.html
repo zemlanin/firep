@@ -60,6 +60,7 @@
       position: relative;
       display: inline-block;
       z-index: 0;
+      --color: red
     }
 
     #firep #highlight span.x:before {
@@ -77,6 +78,7 @@
       box-sizing: border-box;
       padding: 3px;
       background-color: #dffee3;
+      --background-color: transparent;
     }
 
     #wrapper {
@@ -128,7 +130,7 @@
       <input autocomplete="off"
         spellcheck="false"
         autocapitalize="none"
-        value="lol from:me date>21-07-2017"
+        value="tweet lol from:me date>21-07-2017"
       />
       <div id="highlight"></div>
     </form>
@@ -145,24 +147,53 @@
         ">=": "gte",
         "<=": "lte",
       }
+      
+      const queryKeywords = {
+        tweets: {
+          f: () => ({key: 'type', op: 'equal', value: 'tweets'})
+        },
+        tweet: {
+          alias: "tweets",
+        },
+      }
 
       const parseQuery = function(query) {
         const parts = query.replace(/\s+/, " ").split(" ").filter(Boolean)
 
+        const analyzedParts = []
+
+        if (parts && parts[0] && queryKeywords[parts[0]] && query.indexOf(parts[0]) == 0) {
+          const kw = queryKeywords[parts[0]]
+          const typeFilter = kw.alias
+            ? queryKeywords[kw.alias].f()
+            : kw.f()
+
+          Object.assign(
+            typeFilter,
+            {
+              raw: parts[0],
+              startIndex: 0,
+              endIndex: parts[0].length,
+            }
+          )
+          analyzedParts.push(typeFilter)
+        }
+
         const condRegex = /(^|\s*|)([a-z_]+)(:|=|<|>|<=|>=)(\S*)(\s*)/g
 
-        const analyzedParts = []
-        let condCursor,
-          lastIndex = 0
+        let condCursor
+        let lastIndex = analyzedParts[0]
+            ? analyzedParts[0].endIndex
+            : 0
 
         while ((condCursor = condRegex.exec(query)) !== null) {
           const [_, _spaceStart, key, opSymbol, value, _spaceEnd] = condCursor
 
-          if (lastIndex != condCursor.index) {
+          if (lastIndex < condCursor.index) {
             analyzedParts.push({
               key: "query",
               op: "equal",
-              value: query.slice(lastIndex, condCursor.index),
+              value: query.slice(lastIndex, condCursor.index).trim(),
             })
           }
 
@@ -184,7 +215,7 @@
           analyzedParts.push({
             key: "query",
             op: "equal",
-            value: query.slice(lastIndex, query.length),
+            value: query.slice(lastIndex, query.length).trim(),
           })
         }
 
