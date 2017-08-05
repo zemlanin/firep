@@ -37,6 +37,15 @@
       border-radius: 3px;
       padding: 5px;
     }
+    #firep.focused {
+      border-color: gray;
+    }
+    #firep.has-type-filter {
+      border-color: lightblue;
+    }
+    #firep.has-type-filter.focused {
+      border-color: blue;
+    }
     #firep input {
       z-index: 2;
       background-color: transparent;
@@ -84,10 +93,10 @@
     #firep #highlight span.x.key_type:first-child:before {
       background-color: lightblue;
 
-      margin-left: -5px;
+      margin-left: -4px;
       margin-right: -1px;
-      margin-top: -5px;
-      margin-bottom: -5px;
+      margin-top: -4px;
+      margin-bottom: -4px;
       border-bottom-right-radius: 0;
       border-top-right-radius: 0;
       border-color: transparent;
@@ -310,6 +319,10 @@
         ).result
 
         highlightEl.innerHTML = ih || ' '
+
+        document.getElementById("firep").classList.toggle(
+          'has-type-filter', parsedQuery.filters[0] && parsedQuery.filters[0].key === 'type'
+        )
       }
 
       function redraw(input, shouldUpdateDebug) {
@@ -346,6 +359,16 @@
       document.getElementById("firep").addEventListener("input", event => {
         redraw(event.target)
       })
+
+      const toggleFocusedClass = e => {
+        document.getElementById("firep").classList.toggle('focused', e.type === 'focus')
+      }
+
+      document.getElementById("firep").querySelector("input")
+        .addEventListener("focus", toggleFocusedClass)
+
+      document.getElementById("firep").querySelector("input")
+        .addEventListener("blur", toggleFocusedClass)
     </script>
   </div>
 </body>
