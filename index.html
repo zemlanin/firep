@@ -151,12 +151,19 @@
       <input autocomplete="off"
         spellcheck="false"
         autocapitalize="none"
-        value="tweet lol from:me date>21-07-2017"
+        value="tweet from:alice date>2017-12-01"
       />
       <div id="highlight"></div>
     </form>
+    <div>
+      <a href='javascript:document.querySelector("#firep input").value = "tweets";document.querySelector("#firep input").dispatchEvent(new Event("input",{bubbles:!0,cancelable: !0}));'>tweets</a>
+      <a href='javascript:document.querySelector("#firep input").value = "users";document.querySelector("#firep input").dispatchEvent(new Event("input",{bubbles:!0,cancelable: !0}));'>users</a>
+    </div>
 
+    <pre id="results"></pre>
+    <hr/>
     <pre id="query"></pre>
+    <hr/>
     <pre id="debug"></pre>
 
     <script type="text/javascript">
@@ -175,6 +182,12 @@
         },
         tweet: {
           alias: "tweets",
+        },
+        users: {
+          f: () => ({key: 'type', op: 'equal', value: 'users'})
+        },
+        user: {
+          alias: "users",
         },
       }
 
@@ -200,7 +213,7 @@
           analyzedParts.push(typeFilter)
         }
 
-        const condRegex = /(^|\s*|)([a-z_]+)(:|=|<|>|<=|>=)(\S*)(\s*)/g
+        const condRegex = /(^|\s*|)([a-z_]+)(:|=|<=|>=|<|>)(\S*)(\s*)/g
 
         let condCursor
         let lastIndex = analyzedParts[0]
@@ -369,6 +382,119 @@
 
       document.getElementById("firep").querySelector("input")
         .addEventListener("blur", toggleFocusedClass)
+    </script>
+    <script type="text/javascript">
+      const db = {
+        tweets: [
+          {from: 'alice', date: '2017-12-01', text: 'lorem ipsum'},
+          {from: 'alice', date: '2017-12-03', text: 'smorem lipsum'},
+          {from: 'bob', date: '2017-12-03', text: 'lorem ipsum'},
+          {from: 'loren', date: '2017-12-02', text: 'bob ilicum'},
+        ],
+        users: [
+          {name: 'alice'},
+          {name: 'bob'},
+        ]
+      }
+
+      const objValuesAsText = (obj, currentText) => {
+        if (!obj) {
+          return currentText
+        }
+
+        if (typeof obj === 'string') {
+          return currentText + ' ' + obj
+        }
+
+        if (Array.isArray(obj)) {
+          return currentText + ' ' + obj.map(v => objValuesAsText(v, '')).join(' ')
+        }
+
+        if (typeof obj === 'object') {
+          for (const k of Object.keys(obj)) {
+            currentText = objValuesAsText(obj[k], currentText)
+          }
+        }
+
+        return currentText
+      }
+
+      const findAndDisplay = parsedQuery => {
+        let results = []
+        let searchType = null
+
+        for (const f of parsedQuery.filters) {
+          if (f.key === 'type') {
+            searchType = f.value
+            break
+          }
+        }
+
+        if (searchType === null) {
+          return
+        }
+
+        const reducers = [(acc, v) => {acc.push(v); return acc}]
+
+        const RMap = {
+          from: f => (acc, v) => {
+            if (f.op === 'equal' && f.value && v.from.indexOf(f.value) > -1) {
+              acc.push(v)
+            }
+
+            return acc
+          },
+
+          date: f => (acc, v) => {
+            const vDate = new Date(v.date)
+            const fDate = new Date(f.value)
+
+            if (
+              f.op === 'equal' && vDate == fDate ||
+              f.op === 'gt' && vDate > fDate ||
+              f.op === 'gte' && vDate >= fDate ||
+              f.op === 'lt' && vDate < fDate ||
+              f.op === 'lte' && vDate <= fDate
+            ) {
+              acc.push(v)
+            }
+
+            return acc
+          },
+
+          query: f => (acc, v) => {
+            let plainTextValue = objValuesAsText(v, '')
+
+            if (f.op === 'equal' && (
+              !f.value || plainTextValue.indexOf(f.value) > -1
+            )) {
+              acc.push(v)
+            }
+
+            return acc
+          }
+        }
+
+        for (const f of parsedQuery.filters) {
+          if (RMap[f.key]) {
+            reducers.push(RMap[f.key](f))
+          }
+        }
+
+        document.getElementById('results').innerText = JSON.stringify(
+          reducers.reduce((acc, r) => acc.reduce(r, []), db[searchType]),
+          null,
+          '  '
+        )
+      }
+
+      findAndDisplay(parseQuery(document.getElementById("firep").querySelector("input").value))
+
+      document.getElementById("firep").addEventListener("input", event => {
+        const parsedQuery = parseQuery(event.target.value)
+
+        findAndDisplay(parsedQuery)
+      })
     </script>
   </div>
 </body>
